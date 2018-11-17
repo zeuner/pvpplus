@@ -1,3 +1,5 @@
+minetest.register_privilege("pvp", "Can configure own PvP setting")
+
 -- Private table
 local pvptable = {}
 
