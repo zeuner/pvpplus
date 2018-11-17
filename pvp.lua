@@ -7,19 +7,16 @@ local pvptable = {}
 pvpplus = {}
 
 local S
-
-if minetest.get_modpath(
-	"intllib"
-) then
-	S = intllib.Getter(
-	)
+if minetest.get_modpath("intllib") then
+	S = intllib.Getter()
 else
-	S = function(
-		translated
-	)
+	S = function(translated)
 		return translated
 	end
 end
+
+minetest.register_privilege("pvp", S("Can change own PvP state"))
+minetest.register_privilege("pvp_admin", S("Can change others PvP state"))
 
 function pvpplus.pvp_set(player_name, state)
 	if pvpplus.is_playing_tournament(player_name) then
@@ -94,54 +91,13 @@ function pvpplus.pvp_toggle(playername)
 end
 
 function pvpplus.is_pvp(playername)
+	if not pvptable[playername] then
+		return false, string.format(S("Player %s does not exist or is not currently connected."), playername)
+	end
 	return pvptable[playername].state or false
 end
 
-if minetest.get_modpath("unified_inventory") then
-	unified_inventory.register_button("pvp", {
-		type = "image",
-		image = "pvp.png",
-		tooltip = "PvP",
-		condition = function(player)
-			return minetest.check_player_privs(
-				player:get_player_name(),
-				{
-					pvp = true
-				}
-			)
-		end,
-		action = function(player)
-			pvpplus.pvp_toggle(player:get_player_name())
-		end
-	})
-end
-
-minetest.register_chatcommand("pvp_enable", {
-	params = "",
-	description = S("Enables PvP"),
-	privs = {
-		pvp = true
-	},
-	func = function(name, param)
-		if pvpplus.is_pvp(name) then
-			return false, S("Your PvP is already enabled.")
-		end
-		return pvpplus.pvp_enable(name)
-	end
-})
-minetest.register_chatcommand("pvp_disable", {
-	params = "",
-	description = S("Disables PvP"),
-	privs = {
-		pvp = true
-	},
-	func = function(name, param)
-		if not pvpplus.is_pvp(name) then
-			return false, S("Your PvP is already disabled.")
-		end
-		return pvpplus.pvp_disable(name)
-	end
-})
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/pvp_commands.lua")
 
 ------ Load tournaments ------
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/tournament.lua")
